@@ -74,6 +74,7 @@ services:
     build: ./fluentd
     volumes: 
      - ./fluentd/fluent.conf:/fluentd/etc/fluent.conf
+     - ./fluentd/access2.log:/var/log/access2.log
     depends_on:
       - elasticsearch
     networks:
