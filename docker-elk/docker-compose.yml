@@ -41,22 +41,21 @@ services:
       - elk
     depends_on:
       - elasticsearch
-
-  fluent-bit:
-    image: fluent/fluent-bit:1.5
-    volumes:
-      - ./fluent-bit/conf:/fluent-bit/etc
-    ports:
-      - 24224:24224
-      - 5140:5140/udp
-      - 2020:2020
-    logging:
-        driver: "json-file"
-        options:
-            max-size: 100m
-            max-file: "5"
-    networks:
-      - elk
+  # fluent-bit:
+  #   image: fluent/fluent-bit:1.5
+  #   volumes:
+  #     - ./fluent-bit/conf:/fluent-bit/etc
+  #   ports:
+  #     - 24224:24224
+  #     - 5140:5140/udp
+  #     - 2020:2020
+  #   logging:
+  #       driver: "json-file"
+  #       options:
+  #           max-size: 100m
+  #           max-file: "5"
+  #   networks:
+  #     - elk
   nginx:
     image: nginx:latest
     ports: 
@@ -67,8 +66,16 @@ services:
       driver: fluentd
       options:
         fluentd-address: "fluent-bit"
+    # depends_on:
+    #   - fluent-bit
+    networks:
+      - elk
+  fluentd:
+    build: ./fluentd
+    volumes: 
+     - ./fluentd/fluent.conf:/fluentd/etc/fluent.conf
     depends_on:
-      - fluent-bit
+      - elasticsearch
     networks:
       - elk
 networks:
