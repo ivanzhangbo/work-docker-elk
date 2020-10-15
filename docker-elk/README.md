@@ -451,3 +451,9 @@ PUT accnginx
     }
   }
 }
+
+
+### Redhat8 install geo-point
+yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+dnf --enablerepo=epel install geoip-devel
+td-agent-gem install fluent-plugin-geoip
