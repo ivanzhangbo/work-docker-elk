@@ -54,6 +54,8 @@
   s3_object_key_format %{time_slice}/${tag[1]}.json.%{file_extension}
   time_slice_format %Y%m%d%H%M
   overwrite true
+  use_server_side_encryption aws:kms
+  ssekms_key_id 8e75fea8-3ae3-41cc-a434-dfee195a6e17
   <buffer tag,time>
     @type file
     path /tmp/s3
