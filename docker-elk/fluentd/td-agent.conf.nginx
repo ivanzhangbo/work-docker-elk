@@ -1,0 +1,92 @@
+####
+## Output descriptions:
+##
+
+# Treasure Data (http://www.treasure-data.com/) provides cloud based data
+# analytics platform, which easily stores and processes data from td-agent.
+# FREE plan is also provided.
+# @see http://docs.fluentd.org/articles/http-to-td
+#
+# This section matches events whose tag is td.DATABASE.TABLE
+<system>
+  log_level debug
+</system>
+
+<source>
+  @type tail
+  path /var/log/nginx/access.log
+  pos_file /tmp/access.pos
+  <parse>
+    @type nginx
+    keep_time_key true
+  </parse>
+  tag debug.nginx
+</source>
+
+<filter debug.*>
+  @type geoip
+  backend_library geoip2_c
+
+  # Set key name for the client ip address values
+  geoip_lookup_keys     remote
+
+  # Specify key name for the country_code values
+  <record>
+      #geoip_country ${country.names.en["remote"]}
+      #geoip_city ${city.names.en["remote"]}
+      #geoip_lat ${location.latitude["remote"]}
+      #geoip_lon ${location.longitude["remote"]}
+      #location ${location.latitude["remote"]},${location.longitude["remote"]}
+      location1 ${location.latitude["remote"]}
+      location2 ${location.longitude["remote"]}
+  </record>
+  # To avoid get stacktrace error with `[null, null]` array for elasticsearch.
+  skip_adding_null_record  true
+</filter>
+
+<match debug.1>
+  @type s3
+  s3_region ap-northeast-1
+  s3_bucket tj-org-log1
+  time_slice_wait 1m
+  path fluentd/
+  format json
+  s3_object_key_format %{time_slice}/${tag[1]}.json.%{file_extension}
+  time_slice_format %Y%m%d%H%M
+  overwrite true
+  <buffer tag,time>
+    @type file
+    path /tmp/s3
+    timekey 60 # 1 hour partition
+    timekey_wait 1m
+    #timekey_use_utc true # use utc
+  </buffer>
+  <assume_role_credentials>
+    role_arn         arn:aws:iam::192737007328:role/cloud9-adminaccess-role
+    role_session_name test
+  </assume_role_credentials>
+</match>
+
+<match debug.*>
+  @type stdout
+  <format>
+    @type json
+  </format>
+</match>
+
+<match debug.1>
+  @type file
+  <format>
+    @type json
+  </format>
+  path /tmp/access.json
+  <buffer>
+    # バッファタイプはファイル
+    @type file
+    # バッファファイルの出力先
+    path /tmp/nginx-buffer
+    flush_mode interval
+    # 60sごとにファイルに書き出す
+    flush_interval 60s
+  </buffer>
+</match>
